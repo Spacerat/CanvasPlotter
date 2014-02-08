@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Paint</title>
+		<script src="jquery-1.5.2.min.js"></script>
+		<script src="tools.js"> </script>
+		<script src="plot.js"> </script>
+		
+		<link rel="stylesheet" href="codemirror.css">
+		<script src="codemirror-compressed.js"></script>
+		<link rel="stylesheet" href="javascript.css">
+		
+
+		
+		<style>
+			body {
+				font-family: sans-serif;
+			}
+			h1 {
+				background-color: #ccd;
+			}
+			#canv {
+				border: thin black solid;
+			}
+			.CodeMirror {
+				border-top: thin black solid;
+				border-bottom: thin black solid;
+			}
+			.fl {
+				float: left;
+			}
+			.cl {
+				clear: both;
+			}
+			.dash {
+				border: thin #AAA dashed;
+				padding: 0.4em;
+			}
+			div.example {
+				margin-left: 0.5em;
+				padding: 0.5em;
+				background-color: #EEE;
+				display: inline-block;
+			}
+			h3 {
+				background-color: #ccd;
+			}
+		</style>
+
+    </head>
+	<body>
+		<h1> Javascript Canvas Thingy </h1>
+		<div class="fl">
+			<canvas id="canv" width="600" height="600">
+			
+			</canvas> 
+		</div>
+		<div class="fl dash">
+			Width: <input id="w" type="text" value="PI * 2" />
+			Height: <input id="h" type="text" value="PI * 2" /> </br>
+			<textarea id="code" name="code">
+width = 2; height = 2;
+
+fillCanvas(function(x, y) {
+  var hue = atan2(y, x);
+  var sat = 1;
+  var light = 1 - sqrt(x*x + y*y);
+  
+  return HSL(hue, sat, light);
+});
+
+width = 2*PI; height = 2*PI;
+
+fillCanvas(function(x, y) {
+  if (x-0.1 < sin(y*2) && x+0.1 > sin(y*2)) {
+    return RGBA(abs(x/3), 0, abs(y/(2*PI)), 1);
+  }
+});
+</textarea>		
+			<br />
+		<button id="run">Run</button>
+		<button id="save">Save as PNG</button>
+		<button id="geturl">Encode as URL</button><br />
+		</div>
+		<div class="fl dash">
+		<strong>Error Output</strong>
+		<div id="outp"></div>
+		</div>
+		<div class="cl dash">
+		<h2 name="doc"> Documentation </h2>
+		<h3> Contents </h3>
+		<ol>
+			<li><a href="#p_basics">Basics</a></li>
+			<li><a href="#p_colour">Colours</a></li>
+			<li><a href="#p_plotting">Plotting functions</a></li>
+			<li><a href="#p_math">Math functions</a></li>
+
+		</ol>
+		
+		<h3 id = "p_basics"> Basics </h3>
+		<p> This page allows you to easily graph functions using Javascript. Simply enter your
+		code in the box and click run. The centre of the canvas is the origin (0, 0), and the
+		canvas goes from <em>-width</em> to <em>width</em> and <em>-height</em> to <em>height</em>.
+		These values are entred above.</p>
+		
+		
+		<h3 id="p_colour">Colours</h3>
+		<p> The functions below require colour values. There are two functions used to specify colour.
+		Both of them have an <em>alpha</em> parameter - this is an optional parameter which set the
+		transparency of the colour between 0 (transparent) and 1 (opaque).</p>
+		<h4> RGBA(red, green, blue, [alpha])</h4>
+		<h4> RGB(red, green, blue, [alpha])</h4>
+		<p>Creates a colour using values of <em>red</em>, <em>green</em> and <em>blue</em> all in the range [0-1].</p>
+		<h4> HSLA(hue, saturation, lightness, [alpha])</h4>
+		<h4> HSL(hue, saturation, lightness, [alpha])</h4>
+		<p>Creates a colour with a hue in radians, and <em>lightness</em> and <em>saturation</em> in the range [0-1].</p>
+		
+		<h3 id="p_plotting"> Plotting Functions </h3>
+		<p>These are the main functions for this tool. There are currently three:</p>
+		<h4> Clear() </h4>
+		<p> Clears the canvas to white.</p>
+		<h4> fillCanvas( function(x, y) ) </h4>
+		<p>fillCanvas executes your function for every x and y coordinate. Your function should return
+		a colour. Here is a basic example:</p>
+		<pre class="example">
+fillCanvas(function(x, y) {
+  var r, g, b;
+  r = x; //red increases as x increases
+  g = abs(y); //green increases as |y| increases
+  b = 0; //blue is 0
+  return RGBA(r, g, b, 1);
+});</pre>
+<pre class="example">
+Clear(); 
+
+fillCanvas( function(x, y) {
+  return HSLA(2*PI*sin((x*y)/10),
+              0.8 , 
+              abs(sin(x/2)*sin(y/2)));
+});
+</pre>
+		<p> It is also possible to use this function to fill the canvas with one colour. This is a good point to
+		note that the contents of the previous render are not automatically cleared when you click run. After trying
+		the previous example, running this example will add a magenta tint.</p>
+		<pre class="example">
+fillCanvas(RGBA(1, 0, 1, 0.5));</pre>
+
+		<h4> Plot(from, to, step, function(t), [colour]) </h4>
+		<p>The Plot function executes your function for every value of t between <em>from</em> and <em>to</em>,
+		increasing by <em>step</em>. Your function should return either a number (a y coordinate) or an array,
+		of [x, y]. The plotted colour is either black (default), a colour you specify, or a function returning a colour.<p>
+		<p>The first example below uses the global constants <strong>width</strong>
+		and <strong>height</strong>, which are equal to the numbers supplied by you in the width/height boxes. The
+		second example demonstrates returning [x,y] coordinates, and also using a function to return a HSLA colour.</p>
+<pre class="example">
+Clear();
+
+Plot(-width, width, width/600, function(t) {
+  return (height/2)*sin(t);
+}, RGBA(1, 0, 0));</pre>
+<pre class="example">
+Clear();
+
+Plot(0, PI*80, 0.005, function(t) {
+  return [(t/60)*sin(t), (t/50)*cos(t)];
+}, function(t) {
+ return HSLA(t, 0.5 , 0.5); 
+});
+</pre>
+		<h4> PlotY(function(x), [colour]) </h4>
+		<p>PlotY essentially lets you write y = f(x). For every value of x between -<strong>width</strong> and
+		<strong>width</strong>, y is plotted at f(x) with a colour you specify (or a function(x) returning a colour).<p>
+		<p>The function is essentially a shortcut for <pre> Plot(-width, width, width/600, f(t), col)</pre></p>
+<pre class="example">
+Clear();
+
+PlotY(function(x) {
+  var k = (height/20);
+  x = x;
+  return k * (2*x*x*x - 4*x*x - x + 2);
+}, RGBA(1, 0, 0));</pre>
+		
+		<h3 id="p_math"> Math Functions </h3>
+		<p>All of the javascript math functions are available. Documentation for them is available
+		<a href="http://www.w3schools.com/jsref/jsref_obj_math.asp">here</a>. For convenience, there
+		is no need to use the Math object. For example instead of Math.<em>sin(t)</em> as you would
+		normally do, instead simply write <em>sin(t)</em>. Here is the list of maths functions and
+		constants which have been made available outside of the Math object: </p>
+		<ul>
+		<li>abs(x)</li><li>acos(x)</li><li>asin(x)</li><li>atan(x)</li><li>atan2(y,x)</li><li>ceil(x)</li>
+		<li>round(x)</li><li>floor(x)</li><li>sin(x)</li><li>cos(x)</li><li>tan(x)</li><li>log(x)</li><li>exp(x)</li>
+		<li>pow(x, y) <em> i.e. x ^ y </em></li><li>sqrt(x)</li><li>min(x, y, z ..n)</li><li>max(x, y, z, ..n)</li>
+		<li>random()</li><li>e</li><li>PI</li>
+		
+		</ul>
+	</body>
+</html>
